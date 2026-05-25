@@ -44,3 +44,4 @@ GET observability-events/_search
   }
 }
 ```
+# CocoaHeads-Observability
