@@ -1,0 +1,279 @@
+{
+  "version": "7.10.0",
+  "objects": [
+    {
+      "type": "dashboard",
+      "id": "cocoaheads-observability",
+      "attributes": {
+        "title": "CocoaHeads Observability Dashboard",
+        "description": "Dashboard for CocoaHeads demo app observability",
+        "panels": [
+          {
+            "version": "7.10.0",
+            "gridData": {
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 3
+            },
+            "type": "visualization",
+            "embeddableConfig": {},
+            "panelIndex": "1",
+            "embeddableConfig": {},
+            "panelRefName": "panel_1"
+          },
+          {
+            "version": "7.10.0",
+            "gridData": {
+              "x": 12,
+              "y": 0,
+              "w": 12,
+              "h": 3
+            },
+            "type": "visualization",
+            "embeddableConfig": {},
+            "panelIndex": "2",
+            "embeddableConfig": {},
+            "panelRefName": "panel_2"
+          },
+          {
+            "version": "7.10.0",
+            "gridData": {
+              "x": 0,
+              "y": 3,
+              "w": 24,
+              "h": 5
+            },
+            "type": "visualization",
+            "embeddableConfig": {},
+            "panelIndex": "3",
+            "embeddableConfig": {},
+            "panelRefName": "panel_3"
+          }
+        ],
+        "timeRestore": false,
+        "timeFrom": "now-24h",
+        "timeTo": "now",
+        "refreshInterval": {
+          "pause": false,
+          "value": 10000
+        }
+      },
+      "references": [
+        {
+          "name": "panel_1",
+          "type": "visualization",
+          "id": "events-by-type"
+        },
+        {
+          "name": "panel_2",
+          "type": "visualization",
+          "id": "severity-distribution"
+        },
+        {
+          "name": "panel_3",
+          "type": "visualization",
+          "id": "event-timeline"
+        }
+      ]
+    },
+    {
+      "type": "visualization",
+      "id": "events-by-type",
+      "attributes": {
+        "title": "Events by Type",
+        "visState": {
+          "title": "Events by Type",
+          "type": "pie",
+          "params": {
+            "addTooltip": true,
+            "addLegend": true,
+            "legendPosition": "right",
+            "isDonut": false
+          },
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "terms",
+              "schema": "segment",
+              "params": {
+                "field": "eventName.keyword",
+                "size": 10,
+                "order": "desc",
+                "orderBy": "1",
+                "customLabel": "Event Type"
+              }
+            }
+          ]
+        },
+        "uiStateJSON": "{}",
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": {
+            "index": "observability-events",
+            "query": {
+              "match_all": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "visualization",
+      "id": "severity-distribution",
+      "attributes": {
+        "title": "Severity Distribution",
+        "visState": {
+          "title": "Severity Distribution",
+          "type": "histogram",
+          "params": {
+            "addTooltip": true,
+            "addLegend": true,
+            "legendPosition": "right"
+          },
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "terms",
+              "schema": "segment",
+              "params": {
+                "field": "severity",
+                "size": 5,
+                "order": "asc",
+                "orderBy": "_key",
+                "customLabel": "Severity"
+              }
+            }
+          ]
+        },
+        "uiStateJSON": "{}",
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": {
+            "index": "observability-events",
+            "query": {
+              "match_all": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "visualization",
+      "id": "event-timeline",
+      "attributes": {
+        "title": "Event Timeline",
+        "visState": {
+          "title": "Event Timeline",
+          "type": "area",
+          "params": {
+            "addTooltip": true,
+            "addLegend": true,
+            "legendPosition": "bottom",
+            "grid": {
+              "categoryLines": false,
+              "valueAxis": "ValueAxis-1"
+            },
+            "categoryAxes": [
+              {
+                "id": "CategoryAxis-1",
+                "type": "category",
+                "position": "bottom",
+                "show": true,
+                "style": {},
+                "scale": {
+                  "type": "linear"
+                },
+                "labels": {
+                  "show": true,
+                  "truncate": 100
+                },
+                "title": {}
+              }
+            ],
+            "valueAxes": [
+              {
+                "id": "ValueAxis-1",
+                "name": "LeftAxis-1",
+                "type": "value",
+                "position": "left",
+                "show": true,
+                "style": {},
+                "scale": {
+                  "type": "linear",
+                  "mode": "normal"
+                },
+                "labels": {
+                  "show": true,
+                  "truncate": 100
+                },
+                "title": {
+                  "text": "Count"
+                }
+              }
+            ]
+          },
+          "aggs": [
+            {
+              "id": "1",
+              "enabled": true,
+              "type": "count",
+              "schema": "metric",
+              "params": {}
+            },
+            {
+              "id": "2",
+              "enabled": true,
+              "type": "date_histogram",
+              "schema": "segment",
+              "params": {
+                "field": "@timestamp",
+                "interval": "auto",
+                "customInterval": "2h",
+                "min_doc_count": 1,
+                "extended_bounds": {},
+                "customLabel": "Time"
+              }
+            },
+            {
+              "id": "3",
+              "enabled": true,
+              "type": "terms",
+              "schema": "group",
+              "params": {
+                "field": "eventName.keyword",
+                "size": 5,
+                "order": "desc",
+                "orderBy": "1",
+                "customLabel": "Event Type"
+              }
+            }
+          ]
+        },
+        "uiStateJSON": "{}",
+        "kibanaSavedObjectMeta": {
+          "searchSourceJSON": {
+            "index": "observability-events",
+            "query": {
+              "match_all": {}
+            }
+          }
+        }
+      }
+    }
+  ]
+}
