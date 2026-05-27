@@ -57,9 +57,9 @@ enum ObservabilityEventType {
             return 1  // Info
         case .backendError, .timeout, .noInternet, .dnsError:
             return 2  // Warning
-        case .deepLinkFailed, .invalidUrl, .invalidHttpResponse, .sslError, .silentGuardLetFailed:
+        case .invalidUrl, .invalidHttpResponse, .sslError, .silentGuardLetFailed:
             return 3  // Error
-        case .backendErrorDecodeFailed, .requestFailed, .responseDecodeFailed, .genericError:
+        case .backendErrorDecodeFailed, .requestFailed, .responseDecodeFailed, .genericError, .deepLinkFailed:
             return 4  // Critical
         }
     }
