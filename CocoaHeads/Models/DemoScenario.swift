@@ -7,6 +7,7 @@ enum DemoScenario: String, CaseIterable, Identifiable {
     case customError
     case timeout
     case exception
+    case silentGuardFail
 
     var id: String { rawValue }
 
@@ -18,6 +19,7 @@ enum DemoScenario: String, CaseIterable, Identifiable {
         case .customError: return "custom_error"
         case .timeout: return "timeout"
         case .exception: return "exception"
+        case .silentGuardFail: return "silent_guard_fail"
         }
     }
 }

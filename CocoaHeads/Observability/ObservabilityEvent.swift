@@ -26,6 +26,9 @@ enum ObservabilityEventType {
     // Deep link
     case deepLinkFailed(url: String)
 
+    // Silent guard let failures
+    case silentGuardLetFailed(field: String, index: String, arrayCount: Int, expectedCount: Int)
+
     // Custom generic error
     case genericError
 
@@ -41,6 +44,8 @@ enum ObservabilityEventType {
             return "promo_card_generic_error"
         case .deepLinkFailed:
             return "promo_card_deeplink_error"
+        case .silentGuardLetFailed:
+            return "silent_guard_let_failed"
         case .genericError:
             return "promo_card_generic_error"
         }
@@ -52,7 +57,7 @@ enum ObservabilityEventType {
             return 1  // Info
         case .backendError, .timeout, .noInternet, .dnsError:
             return 2  // Warning
-        case .deepLinkFailed, .invalidUrl, .invalidHttpResponse, .sslError:
+        case .deepLinkFailed, .invalidUrl, .invalidHttpResponse, .sslError, .silentGuardLetFailed:
             return 3  // Error
         case .backendErrorDecodeFailed, .requestFailed, .responseDecodeFailed, .genericError:
             return 4  // Critical
@@ -85,6 +90,8 @@ enum ObservabilityEventType {
             return "ssl_certificate_error"
         case .deepLinkFailed:
             return "open_url_rejected"
+        case .silentGuardLetFailed(let field, _, _, _):
+            return "guard_let_failed_field_\(field)"
         case .genericError:
             return "generic_error"
         }
@@ -97,7 +104,7 @@ enum ObservabilityEventType {
         case .backendError(let message, _):
             return message
         case .backendErrorDecodeFailed(let error):
-            return error.localizedDescription
+            return decodingLocale(from: error).locale
         case .requestFailed(let error):
             return error.localizedDescription
         case .invalidHttpResponse(let error):
@@ -105,7 +112,7 @@ enum ObservabilityEventType {
         case .invalidUrl:
             return "invalid_base_url"
         case .responseDecodeFailed(let error):
-            return error.localizedDescription
+            return decodingLocale(from: error).locale
         case .timeout:
             return "timeout"
         case .noInternet:
@@ -116,6 +123,8 @@ enum ObservabilityEventType {
             return error.localizedDescription
         case .deepLinkFailed(let url):
             return url
+        case .silentGuardLetFailed(let field, let index, _, _):
+            return "SilentGuardLetDemo.processUserDataGood[field=\(field), index=\(index)]"
         case .genericError:
             return "generic_error"
         }
@@ -128,7 +137,8 @@ enum ObservabilityEventType {
         case .backendError(let msg, _):
             return ["reason": msg]
         case .backendErrorDecodeFailed:
-            return ["reason": "backend_error_decode_failed"]
+            let info = decodingLocale(from: extractError(from: self))
+            return ["reason": "backend_error_decode_failed", "field": info.field, "coding_path": info.codingPath]
         case .requestFailed:
             return ["reason": "request_failed"]
         case .invalidHttpResponse:
@@ -136,7 +146,8 @@ enum ObservabilityEventType {
         case .invalidUrl:
             return ["reason": "invalid_base_url"]
         case .responseDecodeFailed:
-            return ["reason": "response_decode_failed"]
+            let info = decodingLocale(from: extractError(from: self))
+            return ["reason": "response_decode_failed", "field": info.field, "coding_path": info.codingPath]
         case .timeout:
             return ["reason": "timeout"]
         case .noInternet:
@@ -147,8 +158,47 @@ enum ObservabilityEventType {
             return ["reason": "ssl_error", "type": "security"]
         case .deepLinkFailed(let url):
             return ["url": url]
+        case .silentGuardLetFailed(let field, let index, let arrayCount, let expectedCount):
+            return [
+                "reason": "silent_guard_let_failed",
+                "field": field,
+                "index": index,
+                "array_count": "\(arrayCount)",
+                "expected_count": "\(expectedCount)",
+                "type": "insufficient_data"
+            ]
         case .genericError:
             return ["reason": "generic_error"]
+        }
+    }
+
+    private func extractError(from event: ObservabilityEventType) -> Error {
+        switch event {
+        case .backendErrorDecodeFailed(let error), .responseDecodeFailed(let error):
+            return error
+        default:
+            return NSError(domain: "Observability", code: -1)
+        }
+    }
+
+    private func decodingLocale(from error: Error) -> (locale: String, field: String, codingPath: String) {
+        guard let decodingError = error as? DecodingError else {
+            let value = error.localizedDescription
+            return (value, value, value)
+        }
+
+        switch decodingError {
+        case let .keyNotFound(key, context):
+            let path = context.codingPath.map(\.stringValue) + [key.stringValue]
+            let joined = path.joined(separator: ".")
+            return (joined, key.stringValue, joined)
+        case let .typeMismatch(_, context), let .valueNotFound(_, context), let .dataCorrupted(context):
+            let path = context.codingPath.map(\.stringValue).joined(separator: ".")
+            let field = context.codingPath.last?.stringValue ?? "unknown"
+            return (path.isEmpty ? decodingError.localizedDescription : path, field, path.isEmpty ? "unknown" : path)
+        @unknown default:
+            let value = error.localizedDescription
+            return (value, value, value)
         }
     }
 }
